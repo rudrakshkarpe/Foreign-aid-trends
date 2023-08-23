@@ -102,14 +102,7 @@ def sector_return():
         json_dict["business"] = result[5]
         json_dict["multi_sector"] = result[6]
         json_list.append(json_dict)
-    #    for result in results:
-    #        da_dict = {result[0]:{'education':result[1],
-    #        'health':result[2],
-    #        'government':result[3],
-    #        'economic':result[4],
-    #        'business':result[5],
-    #        'multi_sector':result[7]}}
-    #        json_list.append(da_dict)
+ 
     return jsonify(json_list)
 
 if __name__ == "__main__":
