@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Basic Foreign Aid Analysis</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style>
+    .line {
+  fill: none;
+  stroke-width: 2px;
+}
+
+.orange {
+  stroke: orange;
+}
+
+.green {
+  stroke: green;
+}
+
+.purple {
+  stroke: purple;
+}
+
+.chocolate {
+  stroke: chocolate;
+}
+.darkmagenta {
+  stroke: darkmagenta;
+}
+
+.teal {
+  stroke: teal;
+}
+    </style>
+
+
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+                <div class="jumbotron text-center">
+                  <h1>Global Foreign Aid Analysis</h1>
+                  <p>REST API results available at "/gla", "/health", and "/sector_spending"</p>
+                  <hr class="my-4">
+                  <p class="lead">Powered by data from the World Bank Databank and the Organization for Economic Cooperation and Development</p>
+                  
+                </div>
+        </div>
+        <div class="row">
+            <div class="col-md-2">
+                <div class="well">
+                    <h5>SELECT Year:</h5>
+                    <select id="selDataset">
+                      <option selected="selected">
+                        2016
+                    </select>
+                </div>
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Foreign Aid Spending Based on Sector</h3>
+                    </div>
+                    <div id="foreign-metadata" class="panel-body"></div>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div id="pie"></div>
+            </div>
+            <div class="col-md-5">
+                <div class="container">
+                  <div class="col-md-5 jumbotron text-center">
+                <p><small>
+                  The left pie chart shows foreign aid spending by sector from 1990 to 2016. In 2016, economic, government, education, and health sectors received the highest foreign aid allocations.
+                <p><small>
+
+                </small></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div id="bubble"></div>
+
+        </div>
+    </div>
+    <div class="container">
+        <div class="row">
+                <div class="col-md-12 jumbotron text-center">
+                  <p><small>
+                    The bubble plot visualizes three variables - GDP per capita, literacy rates, and net aid received - for UN's least developed countries over 15 years. It's notable that many countries had a 0% literacy rate before 2002 due to factors like independence, conflicts, and sporadic data collection. The plot suggests that net aid has a modest effect on GDP per capita, which generally increases over time, while literacy rates fluctuate after 2002. Further analysis is needed.
+                  </p></small>
+                  <p><small>The double axis line plot compares foreign aid spent on health with life expectancy for low-income country aggregators over 15 years. It shows a moderate increase in life expectancy as health-related foreign aid spending rises, indicating a positive but not dramatic correlation between the two variables.
+            </small></p>
+                </div>
+        </div>
+
+    <script>
+    //unpacking function
+    function unpack(rows, key) {
+      return rows.map(function(row) { return row[key]; });
+    }
+    //pie builder
+    function buildPie(){
+      Plotly.d3.json('/sector_spending', function(error, response){
+        if (error) return console.warn(error);
+
+        listOfYears = []
+        businessValues = []
+        economicValues = []
+        educationValues = []
+        governmentValues = []
+        healthValues = []
+        multi_sectorValues = []
+
+        for (var i = 0; i < response.length; i++ ){
+          yearValue = response[i].year;
+          listOfYears.push(yearValue);
+          businessValue = response[i].business;
+          businessValues.push(businessValue);
+          economicValue = response[i].economic;
+          economicValues.push(economicValue);
+          educationValue = response[i].education;
+          educationValues.push(educationValue);
+          governmentValue = response[i].government;
+          governmentValues.push(governmentValue);
+          healthValue = response[i].health;
+          healthValues.push(healthValue);
+          multi_sectorValue = response[i].multi_sector;
+          multi_sectorValues.push(multi_sectorValue);
+        }
+        console.log(listOfYears);
+        //select data
+        function getData(chosenYear) {
+          allData = [];
+          for (var i = 0 ; i < listOfYears.length ; i++){
+            if( listOfYears[i] == chosenYear) {
+              allData.push(businessValues[i]);
+              allData.push(economicValues[i]);
+              allData.push(educationValues[i]);
+              allData.push(governmentValues[i]);
+              allData.push(healthValues[i]);
+              allData.push(multi_sectorValues[i]);
+            }
+          }
+        };
+        //set a default
+        setPiePlot(2016);
+
+        function setPiePlot(chosenYear) {
+          getData(chosenYear);
+
+          var data = [{
+            values: allData,
+            labels: ['Business', 'Economic', 'Education', 'Government', 'Health', 'Multi-Sector'],
+            type: 'pie'
+          }];
+
+          var layout = { t:0 , l: 0 };
+
+          var pieee = document.getElementById('pie');
+
+          Plotly.plot(pieee, data, layout);
+          console.log(allData);
+        };
+        var yearSelector = document.getElementById('selDataset');
+
+        function assignOptions(textArray, selector) {
+          for (var i = 0; i < textArray.length; i++) {
+            var currentOption = document.createElement('option');
+            currentOption.text = textArray[i];
+            selector.appendChild(currentOption);
+          }
+        }
+        assignOptions(listOfYears, yearSelector);
+
+        function updateInfo() {
+          setPiePlot(yearSelector.value);
+          setPanel(yearSelector.value);
+        };
+        yearSelector.addEventListener('change', updateInfo, false
+      );
+
+      var panel = document.getElementById("foreign-metadata");
+
+
+      setPanel(2016)
+      function setPanel(year) {
+        Plotly.d3.json('sector_spending', function(error, response){
+          panel.innerHTML = "";
+          for (var i = 0; i < response.length; i ++) {
+            if (response[i].year == year) {
+              for(var key in response[i]) {
+                h6tag = document.createElement('h6');
+                h6Text = document.createTextNode(`${key}: ${response[i][key]}`);
+                h6tag.append(h6Text);
+                panel.appendChild(h6tag);
+              }
+            }
+          }
+        })
+      }
+    });
+    };
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+// net aid received should be x axis, y axis should be gdp_per_capita, bubble size lit
+    function buildBubble() {
+      Plotly.d3.csv('https://raw.githubusercontent.com/j4klein95/foreign_aid_education_project/master/clean_data/altered_gdp_lit_aid.csv', function (error, data) {
+        var lookup = {};
+        function getData(year, region) {
+          var byYear, trace;
+          if (!(byYear = lookup[year])) {;
+            byYear = lookup[year] = {};
+        }
+          if(!(trace = byYear[region])) {
+            trace = byYear[region] = {
+              x: [],
+              y: [],
+              id: [],
+              text: [],
+              marker: {size: []}
+            };
+          }
+          return trace;
+        }
+        for (var i = 0; i < data.length; i++) {
+          var datum = data[i];
+          var trace = getData(datum.year, datum.region);
+          trace.text.push(datum.country);
+          trace.id.push(datum.country);
+          trace.x.push(datum.literacy_rate);
+          trace.y.push(datum.gdp_per_capita);
+          trace.marker.size.push(datum.net_aid_received);
+        }
+        var years = Object.keys(lookup);
+        var firstYear = lookup[years[0]];
+        var regions = Object.keys(firstYear);
+
+        var traces = [];
+        for (i = 0; i < regions.length; i++) {
+          var data = firstYear[regions[i]];
+          traces.push({
+            name: regions[i],
+            x: data.x.slice(),
+            y: data.y.slice(),
+            id: data.id.slice(),
+            text: data.text.slice(),
+            mode: 'markers',
+            marker: {
+              size: data.marker.size.slice(),
+              sizemode: 'area',
+              sizeref: 2000000
+            }
+          });
+        }
+        var frames = [];
+        for (i = 0; i < years.length; i++) {
+          frames.push({
+            name: years[i],
+            data: regions.map(function (region) {
+              return getData(years[i], region);
+            })
+          })
+        }
+        var sliderSteps = [];
+        for (i = 0; i < years.length; i++) {
+          sliderSteps.push({
+            method: 'animate',
+            label: years[i],
+            args: [[years[i]], {
+              mode: 'immediate',
+              transition: {duration: 300, redraw: false},
+            }]
+          });
+        }
+
+        var layout = {
+          xaxis: {
+            title: 'Literacy Rate',
+            range: [0, 100]
+          },
+          yaxis: {
+            title: 'GDP per Capita',
+            range: [0, 4000]
+          },
+          autosize: false,
+          width: 1300,
+          height: 500,
+          hovermode: 'closest',
+          updatemenus: [{
+            x: 0,
+            y: 0,
+            yanchor: 'top',
+            xanchor: 'left',
+            showactivate: false,
+            direction: 'left',
+            type: 'buttons',
+            pad: {t: 87, r: 10},
+            buttons: [{
+              method: 'animate',
+              args: [[null], {
+                mode: 'immediate',
+                fromcurrent: true,
+                transition: {duration: 300},
+                frame: {duration: 500, redraw: false}
+              }],
+              label: 'Play'
+            }, {
+              method: 'animate',
+              args: [[null], {
+                mode: 'immediate',
+                transition: {duration: 0},
+                frame: {duration: 0, redraw: false}
+              }],
+              label: 'Pause'
+            }]
+          }],
+          sliders: [{
+            pad: {l:130, t:60},
+            currentvalue: {
+              visible: true,
+              prefix: 'Year:',
+              xanchor: 'right',
+              font: {size: 20, color: '#666'}
+            },
+            steps: sliderSteps
+          }]
+        };
+        Plotly.plot('bubble', {
+          data: traces,
+          layout: layout,
+          frames: frames,
+        });
+      });
+    };
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////
+    function pleaseWork() {
+      var svgWidth = 1300;
+      var svgHeight = 700;
+      var padding = 100;
+
+      var margin = { top: 30, right: 50, bottom: 120, left: 300 };
+
+      var width = svgWidth - margin.left - margin.right;
+      var height = svgHeight - margin.top - margin.bottom;
+
+      var svg = d3
+        .select('body')
+        .append("svg")
+        .attr("width", svgWidth)
+        .attr("height", svgHeight)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      d3.csv("https://raw.githubusercontent.com/j4klein95/foreign_aid_education_project/master/clean_data/life_clean.csv", function(error, data) {
+        if (error) throw error;
+        console.log(data);
+        console.log([data]);
+        var parseTime = d3.timeParse("%Y");
+
+        data.forEach(function(data) {
+          data.year = parseTime(data.year);
+          data.health_aid_received = +data.health
+          data.ida_only_life_expectancy = +data.ida_only;
+          data.low_middle_income_life_expectancy = +data.low_middle_income;
+          data.lower_middle_income_life_expectancy = +data.lower_middle_income;
+        });
+
+        var xTimeScale = d3.scaleTime().range([0, width]);
+        var yLinearScale = d3.scaleLinear().range([height, 0]);
+        var yLinearScale2 = d3.scaleLinear().range([height, 0]);
+
+        var bottomAxis = d3.axisBottom(xTimeScale);
+        var leftAxis = d3.axisLeft(yLinearScale);
+        var rightAxis = d3.axisRight(yLinearScale2);
+
+        xTimeScale.domain(d3.extent(data, function(data){
+          return data.year;
+        })
+      );
+        yLinearScale.domain([
+          0,
+          d3.max(data, function(data){
+            return data.health_aid_received;
+          })
+        ]);
+        yLinearScale2.domain([
+          0, 100
+        ]);
+        ///////Line Generators
+        var aid_received_line = d3
+          .line()
+          .x(function(data) {
+            return xTimeScale(data.year);
+          })
+          .y(function(data) {
+            return yLinearScale(data.health_aid_received);
+          });
+
+        var ida_only_line = d3
+        .line()
+        .x(function(data) {
+          return xTimeScale(data.year);
+        })
+        .y(function(data) {
+          return yLinearScale2(data.ida_only_life_expectancy);
+        });
+
+        var lower_middle_income_line = d3
+        .line()
+        .x(function(data){
+          return xTimeScale(data.year);
+        })
+        .y(function(data) {
+          return yLinearScale2(data.lower_middle_income_life_expectancy);
+        });
+
+        var low_middle_income_line = d3
+        .line()
+        .x(function(data){
+          return xTimeScale(data.year);
+        })
+        .y(function(data){
+          return yLinearScale2(data.low_middle_income_life_expectancy);
+        });
+
+        svg.append("path").data([data]).attr('d', aid_received_line).attr("class", "line green");
+        svg.append("path").data([data]).attr('d', ida_only_line).attr("class", "line orange");
+        svg.append("path").data([data]).attr('d', lower_middle_income_line).attr("class", "line purple");
+        svg.append("path").data([data]).attr('d', low_middle_income_line).attr("class", "line teal");
+        svg.append("g").attr("transform", "translate(0," + height + ")").call(bottomAxis);
+        svg.append("g").call(leftAxis);
+        svg.append("g").attr("transform", "translate(" + width + ",0)").call(rightAxis);
+        svg
+          .append("text")
+          .attr(
+            "transform",
+            "translate(" + width / 2 + "," + (height + margin.top + 35) + ")")
+          .attr("text-anchor", "middle")
+          .attr("font-size", "16px")
+          .attr("fill", "orange")
+          .text("International Development Association Countries Only (World Bank Classification)");
+
+          svg
+            .append("text")
+            .attr(
+              "transform",
+              "translate(" + width / 2 + "," + (height + margin.top + 10) + ")"
+            )
+            .attr("text-anchor", "middle")
+            .attr("font-size", "16px")
+            .attr("fill", "green")
+            .text("Aid spent on health sector");
+
+            svg
+              .append("text")
+              .attr(
+                "transform",
+                "translate(" + width / 2 + "," + (height + margin.top + 60) + ")"
+              )
+              .attr("text-anchor", "middle")
+              .attr("font-size", "16px")
+              .attr("fill", "purple")
+              .text("Lower Middle Income Countries (GNI per capita $1,026 - $4,036)");
+
+              svg
+                .append("text")
+                .attr(
+                  "transform",
+                  "translate(" + width / 2 + "," + (height + margin.top + 85) + ")"
+                )
+                .attr("text-anchor", "middle")
+                .attr("font-size", "16px")
+                .attr("fill", "teal")
+                .text("Low Middle Income Countries (GNI per capita $4,036 - $12,475)");
+
+            svg
+              .append("text")
+              .attr(
+                "transform",
+                "translate(" + (margin.left-275) + "," + (height/4)+")rotate(-90)"
+              )
+              .attr("font-size", "10px")
+              .attr("fill", "black")
+              .text("$ in current US (millions)");
+
+              svg
+                .append("text")
+                .attr(
+                  "transform",
+                  "translate(" + (980) + "," + (height/14)+")rotate(90)"
+                )
+                .attr("font-size", "10px")
+                .attr("fill", "black")
+                .text("Life Expectancy");
+      });
+    };
+    //function init(){
+      //buildPie();
+    //};
+    //init();
+    pleaseWork();
+    buildPie();
+    buildBubble();
+
+
+
+
+    // update panel with metadata
+
+    //build pie chart
+
+
+    // write function to update pie
+
+
+
+    </script>
+
+</body>
+</html>
