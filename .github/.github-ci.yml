@@ -1,0 +1,22 @@
+# .gitlab-ci.yml
+
+stages:
+  - test
+
+variables:
+  # Define environment variables for your tests
+  NODE_ENV: "test"
+
+before_script:
+  # Install project dependencies and any other setup steps
+  - npm install
+
+test:
+  stage: test
+  script:
+    # Run your automated tests using Jest
+    - npm test
+  artifacts:
+    # Save artifacts, e.g., test reports, for future reference
+    paths:
+      - coverage/
