@@ -5,4 +5,10 @@ Explore and analyze global foreign aid spending and its impact through this inte
 
 ## Project Prview
 
-![Delta](source/image.png)
+![Dashboard](source/image.png)
+---
+
+![Bullle-plot](source/bubble.png)
+---
+
+![Healthcare-plot](source/healthcare.png)
